@@ -1,11 +1,74 @@
 import * as THREE from "three";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useFrame, useThree, type ThreeElements } from "@react-three/fiber";
+import { a, useSprings } from "@react-spring/three";
 
-const Icosahedron = (props: ThreeElements["mesh"]) => {
+type Props = ThreeElements["mesh"] & {
+  nearColor: THREE.Color;
+  farColor: THREE.Color;
+  scale: number;
+  onPressed: () => void;
+};
+
+const Icosahedron = ({
+  nearColor,
+  farColor,
+  onPressed,
+  scale,
+  ...props
+}: Props) => {
   const group = useRef<THREE.Group>(null!);
 
+  const [explodeIcosahedron, setExplodeIcosahedron] = useState(false);
+  const handleIcosahedronPress = () => {
+    setExplodeIcosahedron(true);
+    api.start((index) => {
+      const face = triangles.faces[index];
+      // Compute centroid for explosion
+      const centroid = face
+        .reduce((acc, v) => acc.add(v.clone()), new THREE.Vector3())
+        .divideScalar(3);
+
+      const normal = new THREE.Triangle(face[0], face[1], face[2]).getNormal(
+        new THREE.Vector3()
+      );
+
+      const cols = 5;
+      const row = Math.floor(index / cols);
+      const col = index % cols;
+
+      const worldFace = new THREE.Vector3(col * 1.5 - 3, row * -1.5 + 3, 0);
+      const localGrid = group.current.worldToLocal(worldFace);
+
+      // Compute target direction (towards camera)
+      const targetDir = new THREE.Vector3(0, 0, 100000)
+        .sub(centroid)
+        .normalize();
+
+      // Compute quaternion from normal to target direction
+      const quat = new THREE.Quaternion().setFromUnitVectors(normal, targetDir);
+
+      // Convert quaternion to Euler
+      const euler = new THREE.Euler().setFromQuaternion(quat);
+
+      return {
+        position: [localGrid.x, localGrid.y, localGrid.z],
+        rotation: [euler.x, euler.y, euler.z],
+        scale: [0.2, 0.2, 0.2],
+      };
+
+      return {
+        position: [
+          centroid.x + normal.x,
+          centroid.y + normal.y,
+          centroid.z + normal.z,
+        ],
+      };
+    });
+  };
+
   const { camera } = useThree();
+  //let sizeT: number = 0;
 
   const triangles = useMemo(() => {
     const geo = new THREE.IcosahedronGeometry(1, 0);
@@ -38,14 +101,23 @@ const Icosahedron = (props: ThreeElements["mesh"]) => {
   const meshRefs = useRef<THREE.Mesh[]>([]);
   const colorArrays = useRef<Float32Array[]>([]);
 
-  useFrame(() => {
-    group.current.rotation.y += 0.01;
+  const [springs, api] = useSprings(triangles.faces.length, (index) => ({
+    position: [0, 0, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
+    config: { mass: 1, tension: 120, friction: 14 },
+  }));
 
+  useFrame(() => {
     meshRefs.current.forEach((mesh, i) => {
       if (!mesh) return;
       const geometry = mesh.geometry as THREE.BufferGeometry;
       const colors = colorArrays.current[i];
       const positions = geometry.getAttribute("position");
+
+      if (!explodeIcosahedron) {
+        group.current.rotation.y += 0.001;
+      }
 
       for (let j = 0; j < positions.count; j++) {
         const x = positions.getX(j);
@@ -57,11 +129,7 @@ const Icosahedron = (props: ThreeElements["mesh"]) => {
         const dist = vertex.distanceTo(camera.position);
 
         const t = Math.min(Math.max((dist - 6.5) / (3.5 - 6.5), 0), 1);
-        const c = new THREE.Color().lerpColors(
-          new THREE.Color(0x888888),
-          new THREE.Color(0xffffff),
-          t
-        );
+        const c = new THREE.Color().lerpColors(farColor, nearColor, t);
 
         colors[j * 3] = c.r;
         colors[j * 3 + 1] = c.g;
@@ -73,51 +141,65 @@ const Icosahedron = (props: ThreeElements["mesh"]) => {
   });
 
   return (
-    <group ref={group}>
-      {triangles.faces.map((face, i) => {
-        if (!colorArrays.current[i]) {
-          const colors = new Float32Array(9);
-          face.forEach((v, idx) => {
-            const c = new THREE.Color(0, 1, 0); // start as red
-            colors[idx * 3] = c.r;
-            colors[idx * 3 + 1] = c.g;
-            colors[idx * 3 + 2] = c.b;
-          });
-          colorArrays.current[i] = colors;
-        }
+    <>
+      <group ref={group} scale={scale}>
+        {triangles.faces.map((face, i) => {
+          if (!colorArrays.current[i]) {
+            const colors = new Float32Array(9);
+            face.forEach((v, idx) => {
+              const c = new THREE.Color(0, 1, 0); // start as red
+              colors[idx * 3] = c.r;
+              colors[idx * 3 + 1] = c.g;
+              colors[idx * 3 + 2] = c.b;
+            });
+            colorArrays.current[i] = colors;
+          }
 
-        return (
-          <>
-            <mesh
-              {...props}
-              key={i}
-              ref={(el) => {
-                if (el) meshRefs.current[i] = el;
-              }}
-            >
-              <bufferGeometry attach="geometry">
-                <bufferAttribute
-                  attach="attributes-position"
-                  args={[
-                    new Float32Array(face.flatMap((v) => [v.x, v.y, v.z])),
-                    3,
-                  ]}
+          return (
+            <>
+              <a.mesh
+                {...props}
+                key={i}
+                ref={(el) => {
+                  if (el) meshRefs.current[i] = el;
+                }}
+                position={springs[i].position as any}
+                rotation={springs[i].rotation as any}
+                scale={springs[i].scale as any}
+              >
+                <bufferGeometry attach="geometry">
+                  <bufferAttribute
+                    attach="attributes-position"
+                    args={[
+                      new Float32Array(face.flatMap((v) => [v.x, v.y, v.z])),
+                      3,
+                    ]}
+                  />
+                  <bufferAttribute
+                    attach="attributes-color"
+                    args={[colorArrays.current[i], 3]}
+                  />
+                </bufferGeometry>
+                <meshStandardMaterial
+                  side={THREE.DoubleSide}
+                  wireframe
+                  vertexColors={true}
                 />
-                <bufferAttribute
-                  attach="attributes-color"
-                  args={[colorArrays.current[i], 3]}
-                />
-              </bufferGeometry>
-              <meshStandardMaterial
-                side={THREE.DoubleSide}
-                wireframe
-                vertexColors={true}
-              />
-            </mesh>
-          </>
-        );
-      })}
-    </group>
+              </a.mesh>
+            </>
+          );
+        })}
+      </group>
+      <mesh
+        visible={false}
+        onClick={() => {
+          handleIcosahedronPress();
+        }}
+      >
+        <sphereGeometry args={[1.5]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+    </>
   );
 };
 

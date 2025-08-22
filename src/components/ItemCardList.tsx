@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import ItemCard from "./ItemCard";
 
 interface Props {
@@ -6,11 +6,20 @@ interface Props {
 }
 
 const ItemCardList = ({ cards }: Props) => {
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   return (
     <>
       <div className="d-flex gap-3 flex-wrap">
-        {cards.map(([title, img, description]) => (
-          <ItemCard title={title} img={img}>
+        {cards.map(([title, img, description], index) => (
+          <ItemCard
+            key={index}
+            title={title}
+            img={img}
+            onHover={() => setSelectedIndex(index)}
+            onUnhover={() => setSelectedIndex(-1)}
+            hovered={selectedIndex === index}
+            scale={18 + 2}
+          >
             {description}
           </ItemCard>
         ))}
