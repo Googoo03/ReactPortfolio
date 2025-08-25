@@ -20,49 +20,49 @@ const Icosahedron = ({
   const group = useRef<THREE.Group>(null!);
 
   const [explodeIcosahedron, setExplodeIcosahedron] = useState(false);
+
   const handleIcosahedronPress = () => {
     setExplodeIcosahedron(true);
-    api.start((index) => {
-      const face = triangles.faces[index];
-      // Compute centroid for explosion
-      const centroid = face
-        .reduce((acc, v) => acc.add(v.clone()), new THREE.Vector3())
-        .divideScalar(3);
+    group.current.rotation.y = 0;
+    const planeGeo = new THREE.PlaneGeometry(5, 4, 5, 4);
+    const planePositions = planeGeo.attributes.position.array;
+    const indices = planeGeo.index ? planeGeo.index.array : null;
 
-      const normal = new THREE.Triangle(face[0], face[1], face[2]).getNormal(
-        new THREE.Vector3()
+    api.start((index) => {
+      if (!indices) return;
+
+      const i0 = indices[index * 3];
+      const i1 = indices[index * 3 + 1];
+      const i2 = indices[index * 3 + 2];
+
+      const v0 = new THREE.Vector3(
+        planePositions[i0 * 3],
+        planePositions[i0 * 3 + 1],
+        planePositions[i0 * 3 + 2]
       );
 
-      const cols = 5;
-      const row = Math.floor(index / cols);
-      const col = index % cols;
+      const v1 = new THREE.Vector3(
+        planePositions[i1 * 3],
+        planePositions[i1 * 3 + 1],
+        planePositions[i1 * 3 + 2]
+      );
+      const v2 = new THREE.Vector3(
+        planePositions[i2 * 3],
+        planePositions[i2 * 3 + 1],
+        planePositions[i2 * 3 + 2]
+      );
 
-      const worldFace = new THREE.Vector3(col * 1.5 - 3, row * -1.5 + 3, 0);
-      const localGrid = group.current.worldToLocal(worldFace);
-
-      // Compute target direction (towards camera)
-      const targetDir = new THREE.Vector3(0, 0, 100000)
-        .sub(centroid)
-        .normalize();
-
-      // Compute quaternion from normal to target direction
-      const quat = new THREE.Quaternion().setFromUnitVectors(normal, targetDir);
-
-      // Convert quaternion to Euler
-      const euler = new THREE.Euler().setFromQuaternion(quat);
-
-      return {
-        position: [localGrid.x, localGrid.y, localGrid.z],
-        rotation: [euler.x, euler.y, euler.z],
-        scale: [0.2, 0.2, 0.2],
-      };
+      const geometry = meshRefs.current[index].geometry;
+      const positionAttr = geometry.getAttribute("position");
+      positionAttr.setXYZ(0, v0.x, v0.y, v0.z);
+      positionAttr.setXYZ(1, v1.x, v1.y, v1.z);
+      positionAttr.setXYZ(2, v2.x, v2.y, v2.z);
+      positionAttr.needsUpdate = true;
 
       return {
-        position: [
-          centroid.x + normal.x,
-          centroid.y + normal.y,
-          centroid.z + normal.z,
-        ],
+        scale: [1, 1, 1],
+        position: [v0.x, v0.y, v0.z],
+        rotation: [0, 0, 0],
       };
     });
   };
@@ -101,7 +101,7 @@ const Icosahedron = ({
   const meshRefs = useRef<THREE.Mesh[]>([]);
   const colorArrays = useRef<Float32Array[]>([]);
 
-  const [springs, api] = useSprings(triangles.faces.length, (index) => ({
+  const [springs, api] = useSprings(triangles.faces.length * 3, (index) => ({
     position: [0, 0, 0],
     rotation: [0, 0, 0],
     scale: [1, 1, 1],
@@ -116,7 +116,7 @@ const Icosahedron = ({
       const positions = geometry.getAttribute("position");
 
       if (!explodeIcosahedron) {
-        group.current.rotation.y += 0.001;
+        group.current.rotation.y += 0.00025;
       }
 
       for (let j = 0; j < positions.count; j++) {
@@ -163,8 +163,6 @@ const Icosahedron = ({
                 ref={(el) => {
                   if (el) meshRefs.current[i] = el;
                 }}
-                position={springs[i].position as any}
-                rotation={springs[i].rotation as any}
                 scale={springs[i].scale as any}
               >
                 <bufferGeometry attach="geometry">
@@ -193,7 +191,7 @@ const Icosahedron = ({
       <mesh
         visible={false}
         onClick={() => {
-          handleIcosahedronPress();
+          onPressed();
         }}
       >
         <sphereGeometry args={[1.5]} />

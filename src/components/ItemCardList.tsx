@@ -2,13 +2,20 @@ import { useState, type ReactNode } from "react";
 import ItemCard from "./ItemCard";
 
 interface Props {
+  heading?: string;
+  headingColor?: string;
   cards: [title: string, img: string, description: ReactNode][];
 }
 
-const ItemCardList = ({ cards }: Props) => {
+const ItemCardList = ({ cards, heading, headingColor }: Props) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   return (
     <>
+      {heading && (
+        <h1 style={{ color: headingColor ? headingColor : "#ffffff" }}>
+          {heading}
+        </h1>
+      )}
       <div className="d-flex gap-3 flex-wrap">
         {cards.map(([title, img, description], index) => (
           <ItemCard
