@@ -25,9 +25,6 @@ function CameraAnimator({ targetRotation }: Props) {
     console.log("Camera rotation:", camera.rotation);
     console.log("Spring rotation:", springs.rotation.get());
     let [x, y, z] = springs.rotation.get();
-    x %= 6.28319;
-    y %= 6.28319;
-    z %= 6.28319;
     camera.rotation.set(x, y, z);
   });
 

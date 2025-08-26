@@ -1,6 +1,6 @@
 import Alert from "./components/Alert";
 import Button from "./components/Button";
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, type RefObject } from "react";
 import ItemCardList from "./components/ItemCardList";
 import * as THREE from "three";
 import CameraAnimator from "./components/CameraAnimator";
@@ -11,6 +11,8 @@ import Icosahedron from "./components/Icosahedron";
 import HoverWrapper from "./components/Hover";
 import NavBar from "./components/NavBar";
 import "./App.css";
+import "./Vignette.css";
+import SpinMeshWrapper from "./components/SpinMeshWrapper";
 
 function App() {
   //let items = ["New York", "Moscow", "Los Angeles", "Riverside", "San Marcos"];
@@ -20,7 +22,7 @@ function App() {
 
   let projects: [title: string, img: string, description: ReactNode][] = [
     ["Dual Contour", "/Octohedron.png", <p>Dual Contour Project</p>],
-    ["React Site", "/Octohedron.png", <p>React Portfolio Site</p>],
+    ["React Site", "/Icosahedron.png", <p>React Portfolio Site</p>],
     [
       "Kaylee Site",
       "/Octohedron.png",
@@ -67,7 +69,10 @@ function App() {
         style={{ width: "100vw", height: "100vh", backgroundColor: bgColor }}
         className="d-flex gap-3"
       >
-        <div style={{ flex: 1, backgroundColor: bgColor }}>
+        <div
+          style={{ flex: 1, backgroundColor: bgColor }}
+          className="vignette-container"
+        >
           <Canvas
             camera={{
               position: [0, 0, 5],
@@ -83,27 +88,37 @@ function App() {
             />
             <pointLight position={[10, 10, 10]} />
             <CameraAnimator targetRotation={targetRotation} />
-            <HoverWrapper speed={5}>
+            <HoverWrapper speed={5} position={[0, 0, 0]}>
               {(t: number) => (
-                <Icosahedron
-                  nearColor={new THREE.Color(0xffffff)}
-                  farColor={new THREE.Color(0x555555)}
-                  onPressed={handleClickMesh}
-                  position={[0, 0, 0]}
-                  scale={2 + (3 - 2) * t}
-                />
+                <SpinMeshWrapper>
+                  {(y) => (
+                    <Icosahedron
+                      nearColor={new THREE.Color(0xffffff)}
+                      farColor={new THREE.Color(0x555555)}
+                      onPressed={handleClickMesh}
+                      position={[0, 0, 0]}
+                      rotation={[0, y, 0]}
+                      scale={2 + (3 - 2) * t}
+                    />
+                  )}
+                </SpinMeshWrapper>
               )}
             </HoverWrapper>
-            <HoverWrapper speed={5}>
+            <HoverWrapper speed={5} position={[0, 0, 10]}>
               {(t: number) => (
-                <mesh
-                  position={[0, 0, 10]}
-                  scale={1 + (1.5 - 1) * t}
-                  onClick={handleClickMesh}
-                >
-                  <sphereGeometry args={[1.5]} />
-                  <meshBasicMaterial wireframe />
-                </mesh>
+                <SpinMeshWrapper>
+                  {(y) => (
+                    <mesh
+                      position={[0, 0, 10]}
+                      scale={1 + (1.5 - 1) * t}
+                      onClick={handleClickMesh}
+                      rotation={[0.25, y, 0]}
+                    >
+                      <sphereGeometry args={[1.5]} />
+                      <meshBasicMaterial wireframe />
+                    </mesh>
+                  )}
+                </SpinMeshWrapper>
               )}
             </HoverWrapper>
           </Canvas>

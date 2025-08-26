@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import { useRef, useState, type JSX } from "react";
+import React, { useRef, useState } from "react";
 
 function easeOutExpo(x: number): number {
   return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
@@ -10,11 +10,12 @@ function easeInExpo(x: number): number {
 }
 
 interface HoverWrapperProps {
-  children: (t: number) => JSX.Element;
+  children: (t: number) => React.ReactNode;
+  position?: [number, number, number];
   speed: number;
 }
 
-function HoverWrapper({ children, speed }: HoverWrapperProps) {
+function HoverWrapper({ children, position, speed }: HoverWrapperProps) {
   const [hovered, setHovered] = useState(false);
   const scaleRef = useRef(0); // start at 1
   const [t, setT] = useState(0);
@@ -38,6 +39,7 @@ function HoverWrapper({ children, speed }: HoverWrapperProps) {
       <group>{children(t)}</group>
 
       <mesh
+        position={position}
         visible={false}
         onPointerOver={() => {
           setHovered(true);

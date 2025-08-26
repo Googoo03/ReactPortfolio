@@ -115,10 +115,6 @@ const Icosahedron = ({
       const colors = colorArrays.current[i];
       const positions = geometry.getAttribute("position");
 
-      if (!explodeIcosahedron) {
-        group.current.rotation.y += 0.00025;
-      }
-
       for (let j = 0; j < positions.count; j++) {
         const x = positions.getX(j);
         const y = positions.getY(j);

@@ -12,9 +12,11 @@ const ItemCardList = ({ cards, heading, headingColor }: Props) => {
   return (
     <>
       {heading && (
-        <h1 style={{ color: headingColor ? headingColor : "#ffffff" }}>
-          {heading}
-        </h1>
+        <div className="container-fluid">
+          <h1 style={{ color: headingColor ? headingColor : "#ffffff" }}>
+            {heading}
+          </h1>
+        </div>
       )}
       <div className="d-flex gap-3 flex-wrap">
         {cards.map(([title, img, description], index) => (

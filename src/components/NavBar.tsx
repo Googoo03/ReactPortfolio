@@ -6,7 +6,10 @@ interface Props {
 
 const NavBar = ({ color, textColor, titles }: Props) => {
   return (
-    <nav className="navbar navbar-expand-lg" style={{ backgroundColor: color }}>
+    <nav
+      className="navbar navbar-expand-lg"
+      style={{ backgroundColor: color, borderBottom: "1px solid white" }}
+    >
       <div className="container-fluid">
         <a
           className="navbar-brand"
