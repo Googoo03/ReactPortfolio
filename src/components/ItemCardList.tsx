@@ -18,7 +18,10 @@ const ItemCardList = ({ cards, heading, headingColor }: Props) => {
           </h1>
         </div>
       )}
-      <div className="d-flex gap-3 flex-wrap">
+      <div
+        className="container-fluid d-flex gap-3 flex-wrap"
+        style={{ padding: "1rem" }}
+      >
         {cards.map(([title, img, description], index) => (
           <ItemCard
             key={index}

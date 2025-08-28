@@ -1,6 +1,6 @@
 import Alert from "./components/Alert";
 import Button from "./components/Button";
-import { useState, type ReactNode, type RefObject } from "react";
+import { useState, type ReactNode } from "react";
 import ItemCardList from "./components/ItemCardList";
 import * as THREE from "three";
 import CameraAnimator from "./components/CameraAnimator";
@@ -22,12 +22,12 @@ function App() {
 
   let projects: [title: string, img: string, description: ReactNode][] = [
     ["Dual Contour", "/Octohedron.png", <p>Dual Contour Project</p>],
-    ["React Site", "/Icosahedron.png", <p>React Portfolio Site</p>],
     [
-      "Kaylee Site",
-      "/Octohedron.png",
-      <p>This is the descriptino for kaylees project. She my girlfriend</p>,
+      "Procedural Universe Project",
+      "/LB_Demo_Thumbnail.png",
+      <p>Procedural Universe Project</p>,
     ],
+    ["React Site", "/Icosahedron.png", <p>React Portfolio Site</p>],
   ];
 
   let navTitles: [title: React.ReactNode, link: string][] = [
@@ -130,7 +130,17 @@ function App() {
             color: "white",
           }}
         >
-          <p>This is a paragraph twin</p>
+          <h1>Welcome to My Portfolio</h1>
+          <p>
+            Hi, I'm Nicholas Karalis. I'm a software developer with a passion
+            for creating procedural environments and parallel accelerations.
+            Explore my projects and feel free to reach out!{" "}
+          </p>
+          <p>
+            I will post devlogs about current projects on this page as well.
+            Please use these projects to your desire. Hopefully my work can help
+            you along your development journey!
+          </p>
         </div>
       </div>
       <div style={{ backgroundColor: bgColorSecondary }}>
@@ -141,9 +151,6 @@ function App() {
             I SAID TO START DIGGIN IN YO BUTT TWIN
           </Alert>
         )}
-        <Button color="danger" onButtonPress={handleButtonPress}>
-          SDIYBT
-        </Button>
       </div>
     </>
   );
